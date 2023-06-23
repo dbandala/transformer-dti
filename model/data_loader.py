@@ -33,17 +33,18 @@ def data_preprocessing(img_path, maps=["FA"], signals=12, dti_folder='output'):
     # select only the first 'signals' channels
     data = data[:,range(signals),:,:]
     # read output tensor data
-    if len(maps)==0 or len(maps)>1:
+    if len(maps)==1:
+        output,_ = load_nifti(os.path.join(img_path,dti_folder,'DTI_'+maps[0]+'.nii.gz'))
+        out_shape = output.shape
+        if len(out_shape)==3:
+            output = np.array(output.transpose(2,0,1),dtype=np.float32)
+        elif len(out_shape)==4:
+            output = np.array(output.transpose(2,3,0,1),dtype=np.float32)
+    else:
         output = np.zeros((s,len(maps),h,w),dtype=np.float32) if not len(maps)==0 else np.zeros((len(maps)+6,s,h,w),dtype=np.float32)
         for i in range(len(maps)):
             output_aux,_ = load_nifti(os.path.join(img_path,dti_folder,'DTI_'+maps[i]+'.nii.gz'))
             output[:,i,:,:] = np.array(output_aux.transpose(2,0,1),dtype=np.float32)
-    else:
-        output,_ = load_nifti(os.path.join(img_path,dti_folder,'DTI_'+maps[0]+'.nii.gz'))
-        output = np.array(output.transpose(2,0,1),dtype=np.float32)
-    if len(maps)==0:
-        output_aux,_ = load_nifti(os.path.join(img_path,dti_folder,'DTI_tensor.nii.gz'))
-        output[i:] = np.array(output_aux.transpose(2,3,0,1),dtype=np.float32)
     # numpay array to tensor
     data = torch.tensor(data)
     output = torch.tensor(output)
@@ -202,7 +203,8 @@ def data_conditioning(img, label, def_size=140, def_slices=96):
         slc_add = (def_slices-slices)
         slc = torch.zeros((slc_add,signals,def_size,def_size))
         img = torch.cat((img, slc), 0)
-        slc = torch.zeros((slc_add,def_size,def_size))
+        label_shape = label.shape
+        slc = torch.zeros((slc_add,def_size,def_size)) if len(label_shape)==3 else torch.zeros((slc_add,label_shape[1],def_size,def_size))
         label = torch.cat((label, slc), 0)
     # return data tensors
     return img, label
