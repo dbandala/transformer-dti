@@ -45,7 +45,11 @@ for case_folder in $(ls -d *); do
             if [ ! -d "$dwi_f" ]; then
                 mkdir $dwi_f
                 # convert DICOM to NIFTI images
-                mrconvert $dti_folder/ $dwi_f/DWI.nii.gz -export_grad_mrtrix $dwi_f/grad_table.txt -export_grad_fsl $dwi_f/bvecs.txt $dwi_f/bvals.txt -force
+                if [ -f "comments.txt" ]; then
+                    mrconvert $dti_folder/ $dwi_f/DWI.nii.gz -export_grad_mrtrix $dwi_f/grad_table.txt -export_grad_fsl $dwi_f/bvecs.txt $dwi_f/bvals.txt -force -set_property comments "$(cat comments.txt)"
+                else
+                    mrconvert $dti_folder/ $dwi_f/DWI.nii.gz -export_grad_mrtrix $dwi_f/grad_table.txt -export_grad_fsl $dwi_f/bvecs.txt $dwi_f/bvals.txt -force
+                fi
             fi
             # check if data already processed
             if [ -d "$out_folder" ]; then
@@ -64,8 +68,11 @@ for case_folder in $(ls -d *); do
             # start DWI-DTI processing
             ini_file=$middleproc/DWI.mif
             # convert DICOM images to MIF format
-            mrconvert $dti_folder/ $ini_file -force
-            
+            if [ -f "comments.txt" ]; then
+                mrconvert $dti_folder/ -set_property comments "$(cat comments.txt)" $ini_file -force
+            else
+                mrconvert $dti_folder/ $ini_file -force
+            fi
 
             # extract shells if needed
             if [ ! -z "$extract_shells" ] && [ $extract_shells -eq 1 ]; then
