@@ -33,9 +33,12 @@ def extract_volumes(main_dir):
         # print case
         print("Processing ", os.path.basename(path))
         #input path
-        input = os.path.join(path,'input')
+        inputPath = os.path.join(path,'input')
+        if not os.path.exists(inputPath):
+            os.makedirs(inputPath)
         # read bvecs data
-        bvecs_file = os.path.join(input,'bvecs.txt')
+        #bvecs_file = os.path.join(inputPath,'bvecs.txt')
+        bvecs_file = os.path.join(path,'bvecs.txt')
         with open(bvecs_file) as file:
             bvecs = [line.split() for line in file]
         # rearrange vectors
@@ -43,7 +46,8 @@ def extract_volumes(main_dir):
         # fit tree to vectors
         tree = spatial.KDTree(bvecs)
         # read difussion data
-        data, affine = load_nifti(os.path.join(input,'DWI.nii.gz'))
+        #data, affine = load_nifti(os.path.join(inputPath,'DWI.nii.gz'))
+        data, affine = load_nifti(os.path.join(path,'DWI.nii.gz'))
         #data = np.random.rand(16,16,10,69)
         # get closest directions
         best_dir = []
@@ -52,7 +56,7 @@ def extract_volumes(main_dir):
         # extract only the optimum grad directions
         data = data[:,:,:,best_dir]
         # save new file
-        save_nifti(os.path.join(input,'DWI_opt.nii.gz'), data, affine)
+        save_nifti(os.path.join(inputPath,'DWI_opt.nii.gz'), data, affine)
         # complete print
         print("Complete")
 
